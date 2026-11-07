@@ -18,8 +18,9 @@ if [ ! -d "$KSRC/.git" ]; then
     echo "[*] msm8916-mainline/linux ($KREF) yalnızca DTS kısmı indiriliyor..."
     git clone --depth 1 --filter=blob:none --sparse -b "$KREF" \
         https://github.com/msm8916-mainline/linux.git "$KSRC"
+    # include/uapi/linux: dt-bindings/input/linux-event-codes.h oraya sembolik bağlantı
     git -C "$KSRC" sparse-checkout set \
-        arch/arm64/boot/dts/qcom include/dt-bindings scripts/dtc/include-prefixes
+        arch/arm64/boot/dts/qcom include/dt-bindings include/uapi/linux scripts/dtc/include-prefixes
 fi
 
 QCOM="$KSRC/arch/arm64/boot/dts/qcom"
