@@ -82,6 +82,23 @@ Stok board-id `<8 0x100>`, model "MSM 8916 512MB MTP". Stok DTS'de `st7735s_1281
 
 Ofsetler: `backups/adb-*/info/part-offsets.txt`.
 
+## Debian altında doğrulananlar (2026-11-07)
+
+| Bileşen | Durum |
+|---|---|
+| Önyükleyici | lk1st `next-9929766-20240914`, `lk2nd:compatible: zbx,hmuf02` |
+| Çekirdek / dağıtım | 6.12.1-cpr / Debian 13.7, DT modeli `HMUF02-V05 4G Modem Stick (no modem)` |
+| RAM | 462 MB toplam (stok Android'de 402 MB): modem kapalı DTB ile kazanç |
+| eMMC | rootfs 3.4 GB (2.6 GB boş), /boot 60 MB |
+| Wi-Fi | ✅ WCNSS remoteproc çalışıyor, `wlan0` var (Wi-Fi'ye bağlanma henüz test edilmedi) |
+| USB gadget | ✅ `1D6B:0104`: RNDIS (`br0` 192.168.100.1) + seri (COM) + mass storage |
+| LED kırmızı | ✅ GPIO 72 = `red:power`, açılışta yanıyor (fiziksel olarak doğrulandı) |
+| LED yeşil/mavi | GPIO 73 `green:wlan`, GPIO 71 `blue:wan`. Linux'ta görünüyorlar, renkleri henüz fiziksel olarak doğrulanmadı |
+| Tuş (GPIO 37) | ✅ `KEY_RESTART`. Aktif-yüksek doğru. **Basınca systemd-logind cihazı yeniden başlatır** |
+| Sıcaklık | boşta 41–44 °C |
+| Saat | RTC yok, ağ olmadan saat yanlış başlar (NTP ile düzelir) |
+| Başarısız servisler | `rmtfs` (beklenen, modem kapalı), `nftables` (`iif "br0"` açılışta br0 yokken başarısız) |
+
 ## Sınırlar (Raspberry Pi Zero W'ye göre)
 
 | | Bu dongle | Pi Zero W |
