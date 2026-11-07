@@ -22,7 +22,7 @@ Hedef, Raspberry Pi Zero W benzeri bir kullanım. 4G/LTE tarafı kullanılmayaca
 | 3b | Yedeğin 2 ayrı yere kopyalanması | ⏳ kullanıcı | |
 | 3c | EDL "soğuk" yedek (flaştan hemen önce) | ⏳ | [scripts/windows/backup-edl.ps1](scripts/windows/backup-edl.ps1) |
 | 4 | HMUF02 device tree (doğru LED'ler, modem kapalı) | 📝 taslak | [dts/](dts/) |
-| 5 | Debian 13 imajı derleme (Mio builder + HMUF02 yaması) | 📝 hazır, denenmedi | [builder/apply-hmuf02.sh](builder/apply-hmuf02.sh) |
+| 5 | Debian 13 imajı derleme (Mio builder + HMUF02 yaması, GitHub Actions) | ✅ build #3 başarılı. lk1st'te `zbx,hmuf02`, /boot'ta HMUF02 dtb doğrulandı | [.github/workflows/build-image.yml](.github/workflows/build-image.yml) |
 | 6 | Flaşlama + ilk açılış | – | [docs/03-debian-install.md](docs/03-debian-install.md) |
 | 7 | Yapılandırma (zram, modem kapalı, Wi-Fi, SSH) | 📝 script hazır | [scripts/linux/postinstall.sh](scripts/linux/postinstall.sh) |
 | 8 | Kullanım senaryosu | – | [docs/04-ideas.md](docs/04-ideas.md) |
