@@ -1,0 +1,53 @@
+// SPDX-License-Identifier: GPL-2.0-only
+/*
+ * HMUF02-V05 ("4G LTE WIFI MODEM", zbx002) MSM8916 USB dongle.
+ *
+ * UFI001C ile aynı aile (msm8916-ufi.dtsi). Farklar stok Android DTS'sinden alındı
+ * (backups/*/info/ ve third_party/dts-ref/hmuf02-stock.dts):
+ *   key_freset  -> GPIO 37, aktif-yüksek   (UFI001C ile aynı)
+ *   4g_1        -> GPIO 71
+ *   4g_type     -> GPIO 72
+ *   wifistatus  -> GPIO 73
+ *   ftest       -> GPIO 106 (test LED/pin, kullanılmıyor)
+ *   esim1/2/3   -> GPIO 119 / 14 / 12, sim_hotplug -> GPIO 114
+ *
+ * DURUM: TASLAK. LED renk eşleşmesi (hangi GPIO hangi renk) cihaz üzerinde
+ * doğrulanmalı:  echo 1 > /sys/class/leds/<isim>/brightness
+ */
+
+/dts-v1/;
+
+#include "msm8916-ufi.dtsi"
+
+/ {
+	model = "HMUF02-V05 4G Modem Stick";
+	compatible = "zbx,hmuf02", "thwc,ufi001c", "qcom,msm8916";
+};
+
+&button_restart {
+	gpios = <&tlmm 37 GPIO_ACTIVE_HIGH>;
+};
+
+&button_default {
+	pins = "gpio37";
+	bias-pull-down;
+};
+
+/* wifistatus -> WLAN göstergesi */
+&led_g {
+	gpios = <&tlmm 73 GPIO_ACTIVE_HIGH>;
+};
+
+/* 4g_1 -> WAN göstergesi */
+&led_b {
+	gpios = <&tlmm 71 GPIO_ACTIVE_HIGH>;
+};
+
+/* 4g_type -> güç/durum göstergesi olarak kullanıyoruz */
+&led_r {
+	gpios = <&tlmm 72 GPIO_ACTIVE_HIGH>;
+};
+
+&gpio_leds_default {
+	pins = "gpio71", "gpio72", "gpio73";
+};

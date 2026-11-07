@@ -1,0 +1,114 @@
+# Debian kurulumu
+
+> Ön koşul: [02-backup-restore.md](02-backup-restore.md) içindeki **EDL tam yedeği** alınmış ve iki ayrı yere kopyalanmış olmalı.
+
+## Mimari: neler değişiyor
+
+```
+Stok:    sbl1 → tz/hyp/rpm (stok) → aboot (Android LK) → boot (Android 4.4 çekirdeği) → Android/OpenWrt benzeri stok sistem
+Debian:  sbl1 → tz/rpm (DB410c) + hyp (qhypstub) → aboot = lk1st (lk2nd) → extlinux.conf → mainline Linux 6.12 → Debian
+```
+
+- **lk2nd / lk1st**: msm8916-mainline'ın bootloader'ı. `aboot` bölümüne "lk1st" olarak yazılır, fastboot sağlar ve `extlinux.conf` okur.
+- **qhypstub + DB410c tz/rpm/sbl1**: mainline çekirdek için gerekli. **tz ve hyp birlikte değişmeli.** DB410c tz'si stok hyp ile karışırsa cihaz açılmaz.
+- **GPT değişir**: rootfs tüm eMMC'yi kullanır (`gpt_both0.bin`).
+- `modem`, `persist`, `modemst*`, `fsg`, `fsc`, `sec` yedekten geri yazılır. `msm-firmware-loader` Wi-Fi firmware'ini bu bölümlerden otomatik bağlar.
+
+## Hangi imaj
+
+| Seçenek | Debian | Durum | Öneri |
+|---|---|---|---|
+| [Mio-sha512/OpenStick-Builder](https://github.com/Mio-sha512/OpenStick-Builder) `debian` dalı | stable (= **13 trixie**) | Aktif, CI ile derleniyor, CPR yamalı 6.12.1 çekirdek | **Önerilen** |
+| [LongQT-sea/OpenStick-Builder](https://github.com/LongQT-sea/OpenStick-Builder) | 12 bookworm | Hazır release (v1.2) var | Hızlı deneme için |
+| [kinsamanka/OpenStick-Builder](https://github.com/kinsamanka/OpenStick-Builder) | stable | Asıl kaynak, 6.6 çekirdek | Referans |
+| [OpenStick/OpenStick](https://github.com/OpenStick/OpenStick) | 11 | 2022'den beri durgun | Kullanmayın |
+| postmarketOS (Nura) `zhihe-generic` | Alpine | Aktif | Debian değil, ama en iyi upstream desteği |
+
+Bu repo Mio builder'ını temel alır ve HMUF02 için üç şeyi değiştirir ([builder/apply-hmuf02.sh](../builder/apply-hmuf02.sh)):
+1. LED pinleri doğru olan HMUF02 device tree'si ([dts/](../dts/)). Hazır imajlarla HMUF02'de "her şey çalışıyor ama LED'ler yanmıyor" raporunun sebebi bu.
+2. Varsayılan olarak **modem kapalı** dtb: 4G kullanmıyoruz ve bu ~90 MB RAM kazandırır.
+3. lk1st'in uyumluluk dizesi UFI001C ailesine çekilir.
+
+## İmajı derleme
+
+Derleme Linux gerektirir. İki yol var:
+
+**A) GitHub Actions (önerilen, PC'ye bir şey kurmadan):**
+1. Mio-sha512/OpenStick-Builder'ı GitHub hesabınıza fork'layın.
+2. Bu repodaki `dts/`, `scripts/linux/build-dtb.sh` ve `builder/apply-hmuf02.sh` adımlarını fork'unuzdaki workflow'a ekleyin.
+   Ya da derlenmiş `.dtb`'leri fork'un `dtbs/` klasörüne commit'leyin ve `configs/extlinux.conf` ile `scripts/build_hyp_aboot.sh` içindeki iki satırı elle değiştirin.
+3. Actions → Build → Run workflow. Çıkan artifact'i indirin.
+
+**B) WSL2 (Ubuntu 24.04):**
+```bash
+wsl --install -d Ubuntu-24.04          # Windows tarafında, bir kez
+# Ubuntu içinde, repo dizininde:
+sudo apt install -y git cpp device-tree-compiler
+git clone --recurse-submodules -b debian https://github.com/Mio-sha512/OpenStick-Builder.git build/OpenStick-Builder
+builder/apply-hmuf02.sh build/OpenStick-Builder
+cd build/OpenStick-Builder && sudo ./build.sh
+```
+Çıktılar `build/OpenStick-Builder/files/` altına düşer: `aboot.mbn`, `hyp.mbn`, `rpm.mbn`, `sbl1.mbn`, `tz.mbn`, `gpt_both0.bin`, `boot.bin`, `rootfs.bin`.
+
+## Flaşlama (Windows'tan)
+
+Tüm komutlar repo kökünden. `F` = imaj dosyalarının klasörü, `BK` = EDL yedeğinizin `parts` klasörü.
+
+```powershell
+$edl = ".venv\Scripts\edl.exe"; $fb = "tools\platform-tools\fastboot.exe"
+$F = "build\OpenStick-Builder\files"; $BK = "backups\edl-YYYYMMDD-HHMMSS\parts"
+
+# 1) Cihaz EDL'de. lk1st'i aboot'a yaz, boot'u sil, yeniden başlat -> fastboot'a düşer
+& $edl w aboot "$F\aboot.mbn"
+& $edl e boot
+& $edl reset
+
+# 2) fastboot (lk2nd) -> Aygıt Yöneticisi'nde 18D1:D00D. Gerekirse Zadig ile WinUSB.
+& $fb devices
+& $fb flash partition "$F\gpt_both0.bin"
+& $fb flash aboot "$F\aboot.mbn"
+& $fb flash hyp   "$F\hyp.mbn"
+& $fb flash rpm   "$F\rpm.mbn"
+& $fb flash sbl1  "$F\sbl1.mbn"
+& $fb flash tz    "$F\tz.mbn"
+& $fb flash boot  "$F\boot.bin"
+& $fb flash rootfs "$F\rootfs.bin"
+
+# 3) Cihaza özel bölümleri KENDİ yedeğinden geri yaz
+foreach ($n in 'fsc','fsg','modem','modemst1','modemst2','persist','sec') { & $fb flash $n "$BK\$n.bin" }
+
+& $fb reboot
+```
+
+## İlk açılış
+
+- USB ağ: Windows'ta yeni bir RNDIS/ECM adaptörü belirir. Cihaz **192.168.5.1** adresindedir.
+- Wi-Fi hotspot: builder'a göre SSID "Openstick" veya "4G-UFI-XX", IP 192.168.4.1.
+- Seri konsol: `RX0/TX0/GND`, 115200 (bkz. [00-hardware.md](00-hardware.md)).
+- Varsayılan giriş: `user` / `1`. **İlk iş değiştirin.**
+
+```bash
+ssh user@192.168.5.1
+sudo passwd user && sudo passwd root
+sudo resize2fs /dev/disk/by-partlabel/rootfs     # builder zaten yapmadıysa
+cat /proc/device-tree/model                       # "HMUF02-V05 ..." görmelisiniz
+free -h                                           # nomodem dtb ile ~450 MB+ toplam
+nmcli dev wifi list                               # Wi-Fi çalışıyor mu
+ls /sys/class/leds/                               # LED testi: echo 1 > .../brightness
+```
+
+Sonra yapılandırma scripti:
+```bash
+scp scripts/linux/postinstall.sh user@192.168.5.1:/tmp/
+ssh user@192.168.5.1 sudo sh /tmp/postinstall.sh pistick "<ev-wifi-ssid>" "<parola>"
+```
+
+## Sorun giderme
+
+| Belirti | Olası sebep / çözüm |
+|---|---|
+| Açılmıyor, USB'de hiçbir şey yok | tz/hyp uyumsuz. EDL'e girin (tuş) ve `restore-edl.ps1 -Mode full` |
+| fastboot'ta kalıyor | `boot`/`rootfs` yazılmamış veya extlinux.conf'taki dtb adı yanlış |
+| Wi-Fi yok | `modem`/`persist` geri yazılmamış. `dmesg \| grep -i wcn` ile bakın; nomodem dtb şüpheliyse `msm8916-hmuf02.dtb`'ye dönün |
+| Rastgele eMMC hataları | Builder HS200'e düşürüyor. Yine olursa daha düşük hız gerekebilir |
+| LED'ler ters renk | `dts/msm8916-hmuf02.dts` içinde led_r/g/b GPIO'larını değiştirin, yeniden derleyin |

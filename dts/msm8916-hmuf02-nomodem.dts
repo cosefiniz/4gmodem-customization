@@ -1,0 +1,38 @@
+// SPDX-License-Identifier: GPL-2.0-only
+/*
+ * HMUF02-V05, LTE modem tamamen kapalı varyant.
+ *
+ * 4G kullanılmayacağı için modem DSP'si (MPSS) hiç başlatılmaz ve ona ayrılan
+ * ~85 MB (mpss_mem 0x5500000) + MBA belleği Linux'a geri verilir.
+ * 512 MB RAM'li bir cihazda bu ciddi bir kazanç.
+ *
+ * Wi-Fi (WCNSS/wcn36xx) modemden bağımsız ayrı bir çekirdektir, etkilenmez.
+ * Yine de ilk açılışta "nmcli dev wifi list" ile doğrulayın; sorun olursa
+ * extlinux.conf'ta msm8916-hmuf02.dtb'ye dönün.
+ */
+
+#include "msm8916-hmuf02.dts"
+
+/ {
+	model = "HMUF02-V05 4G Modem Stick (no modem)";
+};
+
+&mpss {
+	status = "disabled";
+};
+
+&mpss_mem {
+	status = "disabled";
+};
+
+&mba_mem {
+	status = "disabled";
+};
+
+&bam_dmux {
+	status = "disabled";
+};
+
+&bam_dmux_dma {
+	status = "disabled";
+};

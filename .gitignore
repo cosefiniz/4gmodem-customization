@@ -1,0 +1,22 @@
+# Cihaz yedekleri: IMEI, MAC, kalibrasyon içerir. ASLA repoya/internete koymayın.
+backups/
+
+# İndirilen araçlar ve 3. parti kaynaklar (scripts/windows/setup-tools.ps1 yeniden indirir)
+tools/
+third_party/
+.venv/
+
+# Build çıktıları
+build/
+out/
+*.img
+*.bin
+*.mbn
+*.zip
+*.tar.gz
+*.xz
+
+# Editör / OS
+.vscode/
+Thumbs.db
+desktop.ini
