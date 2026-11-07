@@ -17,8 +17,10 @@ Hedef, Raspberry Pi Zero W benzeri bir kullanım. 4G/LTE tarafı kullanılmayaca
 |---|---|---|---|
 | 0 | Donanım tespiti (fotoğraflar, stok DTS) | ✅ | [docs/00-hardware.md](docs/00-hardware.md) |
 | 1 | Araçlar: adb/fastboot, bkerler/edl | ✅ indirildi. `pip install` kullanıcı tarafından | [scripts/windows/setup-tools.ps1](scripts/windows/setup-tools.ps1) |
-| 2 | Cihazı USB'de görmek | ⏳ şu an Windows'ta görünmüyor | [scripts/windows/detect-device.ps1](scripts/windows/detect-device.ps1) |
-| 3 | **Tam yedek** (ADB + EDL, SHA256) | ⏳ cihaz bekleniyor | [docs/02-backup-restore.md](docs/02-backup-restore.md) |
+| 2 | Cihazı USB'de görmek | ✅ `05C6:9024`, ADB açık, geçici root alındı | [scripts/windows/detect-device.ps1](scripts/windows/detect-device.ps1) |
+| 3a | **ADB tam yedek** (28 bölüm + tüm eMMC, hash'li) | ✅ 2026-11-07. Kritik bölümlerin hepsi doğrulandı | [docs/02-backup-restore.md](docs/02-backup-restore.md) |
+| 3b | Yedeğin 2 ayrı yere kopyalanması | ⏳ kullanıcı | |
+| 3c | EDL "soğuk" yedek (flaştan hemen önce) | ⏳ | [scripts/windows/backup-edl.ps1](scripts/windows/backup-edl.ps1) |
 | 4 | HMUF02 device tree (doğru LED'ler, modem kapalı) | 📝 taslak | [dts/](dts/) |
 | 5 | Debian 13 imajı derleme (Mio builder + HMUF02 yaması) | 📝 hazır, denenmedi | [builder/apply-hmuf02.sh](builder/apply-hmuf02.sh) |
 | 6 | Flaşlama + ilk açılış | – | [docs/03-debian-install.md](docs/03-debian-install.md) |

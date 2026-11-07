@@ -8,6 +8,11 @@
     -Mode full  : full\emmc_full.bin imajını tüm eMMC'ye yazar (son çare).
   Her iki modda da önce yedeğin SHA256 kontrolü yapılır.
 
+  Hem backup-edl.ps1 hem backup-adb.ps1 yedekleriyle çalışır.
+  ADB yedeğinde parts\ klasörü, sistem çalışırken her bölüm ayrı doğrulanmış kopyaları içerir.
+  Stoka dönüşte önerilen: önce -Mode full (GPT dahil her şey), sonra kritik bölümleri
+  parts\ içinden tek tek yazmak (edl w modemst1 ...).
+
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File scripts\windows\restore-edl.ps1 -Backup backups\edl-20261107-150000 -Mode parts
 #>
@@ -43,7 +48,10 @@ if ((Read-Host) -ne 'EVET') { Write-Host 'İptal.'; exit 1 }
 if ($Mode -eq 'parts') {
     & $Edl wl (Join-Path $Backup 'parts') @common
 } else {
-    & $Edl wf (Join-Path $Backup 'full\emmc_full.bin') @common
+    # EDL yedeği: full\emmc_full.bin, ADB yedeği: full\mmcblk0.bin
+    $img = Get-ChildItem (Join-Path $Backup 'full') -Filter *.bin | Select-Object -First 1
+    if (-not $img) { throw 'full\ altında imaj yok.' }
+    & $Edl wf $img.FullName @common
 }
 if ($LASTEXITCODE -ne 0) { throw "edl hata kodu $LASTEXITCODE" }
 & $Edl reset @common

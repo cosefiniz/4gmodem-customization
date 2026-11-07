@@ -36,19 +36,39 @@ powershell -ExecutionPolicy Bypass -File scripts\windows\detect-device.ps1
 
 ## Yol A: ADB ile hızlı yedek (kutu açılmadan)
 
-1. Dongle'ı takın. Windows'ta bir RNDIS ağ adaptörü belirmeli ve dongle `192.168.100.1` (bazı sürümlerde `192.168.0.1`) olmalı.
-   Dongle'ın Wi-Fi yayınına da bağlanabilirsiniz.
-2. Tarayıcıda `http://192.168.100.1/usbdebug.html` adresini açın (bazı sürümlerde `usb_debug.html`). Bu sayfa ADB'yi açar.
+1. Dongle'ı takın. Windows'ta "Remote NDIS" ağ adaptörü ve "ADB Interface" belirir (USB `05C6:9024`), dongle `192.168.100.1` olur.
+   Bu cihazda ADB **varsayılan açık**. Başka sürümlerde `http://192.168.100.1/usbdebug.html` sayfası açar.
+2. **Başka ADB sunucularını kapatın.** Bu bilgisayarda **SuperDisplay** hizmeti kendi eski ADB'sini (1.0.40) yönetici olarak çalıştırıyor ve dongle'ı sahipleniyor.
+   Yedekten önce durdurun (Hizmetler → SuperDisplay → Durdur), sonra `tools\platform-tools\adb.exe kill-server`. `detect-device.ps1` bu durumu uyarır.
 3. `tools\platform-tools\adb.exe devices` cihazı göstermeli.
-4. Root gerekiyorsa: `adb shell "setprop service.adb.root 1; busybox killall adbd"`, sonra tekrar `adb devices`.
-5. Yedeği alın:
+4. Yedeği alın. Script root'u kendisi alır: `adb root` parola istediği için `setprop service.adb.root 1; busybox killall adbd` kullanır. Bu kalıcı değildir.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\windows\backup-adb.ps1
 ```
 
-Çıktı `backups\adb-<tarih>\` altına gider: `parts\*.bin`, `info\*` (getprop, cpuinfo, bölüm listesi, stok DTS bilgisi) ve `MD5SUMS.txt`.
-Her bölümün hash'i cihazdakiyle karşılaştırılır.
+Çıktı `backups\adb-<tarih>\` altına gider:
+- `parts\*.bin`: 28 bölümün her biri
+- `full\mmcblk0.bin`: GPT dahil tüm eMMC
+- `info\*`: getprop, cpuinfo, bölüm listesi, ofsetler
+- `MD5SUMS.txt` ve `SHA256SUMS.txt`
+
+Her bölümün MD5'i cihazdakiyle karşılaştırılır. Yaklaşık 15 dakika sürer ve 7.1 GB yer kaplar.
+
+**Sistem çalışırken alınan yedeğin sınırı:** çalışan modem `modemst1/2` bölümlerini sürekli yeniden yazar. Android de `cache`/`userdata`'ya yazar.
+Bu yüzden `parts\` içindeki kopyalar kendi anlarında doğrulanmıştır, ama `full\mmcblk0.bin` içindeki aynı bölgeler birkaç dakika sonraki hallerini içerir.
+Stoka dönüşte önce tam imaj, sonra `parts\` içinden kritik bölümler yazılmalıdır.
+Flaşlamadan hemen önce EDL'de (modem kapalıyken) "soğuk" bir yedek almak yine de en iyisidir.
+
+### İlk yedek: 2026-11-07 (`backups\adb-20261107-152754`)
+
+- 26/28 bölüm cihazla birebir doğrulandı (`cache`, `userdata` hariç).
+- Kritik bölümlerin hepsi OK: `modem`, `modemst1`, `modemst2`, `fsg`, `fsc`, `persist`, `sec`, `sbl1`, `aboot`, `rpm`, `tz`, `hyp`.
+- Tam imaj, ayrı bölümlerle karşılaştırıldı:
+  - `system`: sadece ext4 süper bloğu farklı (zararsız).
+  - `modemst1/2`: modem yeniden yazmış.
+  - `cache`, `userdata`: Android yazıyor.
+  - Geri kalan her şey birebir aynı.
 
 ## Yol B: EDL ile tam yedek (altın standart)
 

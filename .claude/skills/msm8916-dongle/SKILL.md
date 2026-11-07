@@ -9,7 +9,10 @@ description: Bu repodaki HMUF02-V05 MSM8916 4G USB dongle'ı ile çalışırken 
 - SoC MSM8916, 512 MB RAM, 4 GB eMMC, WCN3620 Wi-Fi, kart HMUF02-V05 (UFI001 ailesi).
 - Mainline taban: `msm8916-ufi.dtsi` + bizim `dts/msm8916-hmuf02.dts` (LED 71/72/73, tuş 37 aktif-yüksek).
 - UART: kart ön yüzü `RX0/TX0/GND`, 3.3 V, 115200, `ttyMSM0`.
-- USB kimlikleri: EDL `05C6:9008`, fastboot/lk2nd `18D1:D00D`, Linux gadget `1D6B:0104`.
+- USB kimlikleri: stok `05C6:9024` (RNDIS+ADB, 192.168.100.1), EDL `05C6:9008`, fastboot/lk2nd `18D1:D00D`, Linux gadget `1D6B:0104`.
+- Stok ADB: `adb root` parolalı. Geçici root için `setprop service.adb.root 1; busybox killall adbd`. `exec-out` yok, bölüm okumak için `adb pull /dev/block/...` kullan (Git Bash'te `MSYS_NO_PATHCONV=1`).
+- Bu PC'de SuperDisplay hizmeti eski bir adb (1.0.40) çalıştırıp cihazı sahipleniyor. Cihaz görünmezse önce kullanıcıdan durdurmasını iste.
+- Doğrulanmış ilk yedek: `backups\adb-20261107-152754`.
 - Araç yolları (repo kökünden): `tools\platform-tools\adb.exe`, `tools\platform-tools\fastboot.exe`, `.venv\Scripts\edl.exe`.
 
 ## Değişmez güvenlik kuralları

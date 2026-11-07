@@ -48,6 +48,40 @@ Stok board-id `<8 0x100>`, model "MSM 8916 512MB MTP". Stok DTS'de `st7735s_1281
 > Kendi cihazınızın stok DTS'si yedek alınırken `backups/adb-*/info/compatible.txt` içine kaydedilir.
 > Yukarıdaki pinleri kendi dökümünüzle karşılaştırın.
 
+## Bu cihazın stok yazılımı (2026-11-07'de ADB ile okundu)
+
+| | |
+|---|---|
+| USB kimliği | `05C6:9024` (RNDIS + ADB), dongle `192.168.100.1` |
+| Android | 4.4.4 KTU84P, `msm8916_32_512-userdebug`, derleme 2024-08-26, `ro.product.model=UFI` |
+| Çekirdek | Linux 3.10.28 (derleme 2023-09-16) |
+| Kullanılabilir RAM (stok) | 402 MB: geri kalanı modem/Wi-Fi/TZ için ayrılmış |
+| eMMC | 3.64 GiB (`mmcblk0` 3 909 091 328 bayt), ürün adı `H4G2a` |
+| Panel dizesi | `mdss_spi_st7735s_128160_cmd`. lk2nd'nin "zhihe-various" eşleşmesi `128128` bekliyor, bu yüzden otomatik eşleşmeyebilir. Bizim lk1st derlemesi uyumluluğu zorla verdiği için sorun değil |
+| ADB | Varsayılan açık. `adb root` parola istiyor. `setprop service.adb.root 1; busybox killall adbd` geçici root verir |
+| Araçlar | `busybox`, `toolbox`, `dd` var. `su`, `uname`, `head` yok. adbd `exec-out` desteklemiyor, `adb pull` çalışıyor |
+
+### Bölüm tablosu (stok GPT)
+
+| # | Ad | Boyut | | # | Ad | Boyut |
+|---|---|---|---|---|---|---|
+| p1 | modem | 64 MB | | p15 | misc | 1 MB |
+| p2/p3 | sbl1 / sbl1bak | 512 KB | | p16 | fsc | 1 KB |
+| p4/p5 | aboot / abootbak | 1 MB | | p17 | ssd | 8 KB |
+| p6/p7 | rpm / rpmbak | 512 KB | | p18 | splash | 10 MB |
+| p8/p9 | tz / tzbak | 512 KB | | p19 | DDR | 32 KB |
+| p10/p11 | hyp / hypbak | 512 KB | | p20 | fsg | 1.5 MB |
+| p12 | pad | 1 MB | | p21 | sec | 16 KB |
+| p13 | modemst1 | 1.5 MB | | p22 | boot | 16 MB |
+| p14 | modemst2 | 1.5 MB | | p23 | system | 800 MB |
+| | | | | p24 | persist | 32 MB |
+| | | | | p25 | cache | 256 MB |
+| | | | | p26 | config | 512 KB |
+| | | | | p27 | recovery | 16 MB |
+| | | | | p28 | userdata | 2.2 GB |
+
+Ofsetler: `backups/adb-*/info/part-offsets.txt`.
+
 ## Sınırlar (Raspberry Pi Zero W'ye göre)
 
 | | Bu dongle | Pi Zero W |

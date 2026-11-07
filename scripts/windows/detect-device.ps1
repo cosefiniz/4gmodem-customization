@@ -9,6 +9,7 @@ $Fb   = Join-Path $Root 'tools\platform-tools\fastboot.exe'
 $known = @{
     'VID_05C6&PID_9008' = 'EDL / Qualcomm 9008 (firehose) -> backup-edl.ps1 kullanılabilir'
     'VID_18D1&PID_D00D' = 'Fastboot (stok aboot veya lk2nd)'
+    'VID_05C6&PID_9024' = 'Stok yazılım (HMUF02): RNDIS + ADB -> backup-adb.ps1 kullanılabilir'
     'VID_05C6&PID_F00E' = 'Stok yazılım: RNDIS (+ADB olabilir)'
     'VID_05C6&PID_90B6' = 'Stok yazılım: diag/modem kompozit'
     'VID_05C6&PID_9091' = 'Stok yazılım: diag/modem/rmnet kompozit'
@@ -30,6 +31,11 @@ if (-not $hits -and -not $other) {
 
 $net = Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object { $_.InterfaceDescription -match 'RNDIS|NDIS|CDC|Ethernet Gadget|Remote' }
 if ($net) { Write-Host 'USB ağ adaptörleri:'; $net | Select-Object Name, InterfaceDescription, Status | Format-Table -AutoSize | Out-String | Write-Host }
+
+# Başka programların ADB sunucuları cihazı sahiplenir (ör. SuperDisplay, telefon yöneticileri)
+$foreign = Get-CimInstance Win32_Process -Filter "Name='adb.exe'" -ErrorAction SilentlyContinue |
+    Where-Object { $_.ExecutablePath -ne (Resolve-Path $Adb -ErrorAction SilentlyContinue).Path }
+if ($foreign) { Write-Warning "Başka bir adb.exe çalışıyor (PID $($foreign.ProcessId -join ', ')). Cihazı sahiplenebilir; sahibi programı (ör. SuperDisplay hizmeti) durdurun." }
 
 if (Test-Path $Adb) { Write-Host '--- adb devices'; & $Adb devices }
 if (Test-Path $Fb)  { Write-Host '--- fastboot devices'; & $Fb devices }
