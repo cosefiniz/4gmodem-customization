@@ -26,8 +26,11 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $Root = Resolve-Path (Join-Path $PSScriptRoot '..\..')
-$Edl  = Join-Path $Root '.venv\Scripts\edl.exe'
-if (-not (Test-Path $Edl)) { throw "edl bulunamadı. Önce scripts\windows\setup-tools.ps1 çalıştırın." }
+# Not: .venv\Scripts\edl.exe Windows'ta çalışmaz (edlclient\edl.py repo içinde sembolik bağlantı,
+# Windows git'te düz metne dönüşür). Bu yüzden asıl script doğrudan çalıştırılır.
+$Py    = Join-Path $Root '.venv\Scripts\python.exe'
+$EdlPy = Join-Path $Root 'third_party\edl\edl.py'
+if (-not (Test-Path $Py) -or -not (Test-Path $EdlPy)) { throw "edl bulunamadı. Önce scripts\windows\setup-tools.ps1 çalıştırın." }
 
 # Cihaz EDL modunda mı?
 $dev = Get-PnpDevice -PresentOnly -ErrorAction SilentlyContinue | Where-Object { $_.InstanceId -match 'VID_05C6&PID_9008' }
@@ -42,14 +45,19 @@ New-Item -ItemType Directory -Force "$Out\gpt", "$Out\parts", "$Out\full" | Out-
 $common = @('--memory=emmc')
 if ($Loader) { $common += "--loader=$Loader" }
 
-function Invoke-Edl([string[]]$EdlArgs, [string]$LogName) {
+function Invoke-Edl([string[]]$EdlArgs, [string]$LogName, [switch]$Optional) {
     Write-Host "[*] edl $($EdlArgs -join ' ')" -ForegroundColor Cyan
-    & $Edl @EdlArgs @common 2>&1 | Tee-Object -FilePath (Join-Path $Out $LogName)
-    if ($LASTEXITCODE -ne 0) { throw "edl hata kodu $LASTEXITCODE ($LogName)" }
+    # PowerShell 5.1 native stderr'i hata sayar; çıkış kodu ayrıca kontrol ediliyor
+    $ErrorActionPreference = 'Continue'
+    & $Py $EdlPy @EdlArgs @common 2>&1 | ForEach-Object { "$_" } | Tee-Object -FilePath (Join-Path $Out $LogName)
+    if ($LASTEXITCODE -ne 0) {
+        if ($Optional) { Write-Warning "edl $($EdlArgs[0]) desteklenmiyor/başarısız (kod $LASTEXITCODE), devam." }
+        else { throw "edl hata kodu $LASTEXITCODE ($LogName)" }
+    }
 }
 
 Invoke-Edl @('printgpt')                          'printgpt.log'
-Invoke-Edl @('getstorageinfo')                    'storageinfo.log'
+Invoke-Edl @('getstorageinfo')                    'storageinfo.log' -Optional
 Invoke-Edl @('gpt', "$Out\gpt", '--genxml')       'gpt.log'
 Invoke-Edl @('rl',  "$Out\parts", '--genxml')     'parts.log'
 if (-not $SkipFull) {
@@ -73,4 +81,4 @@ Write-Host ''
 Write-Host "[+] Yedek tamam: $Out" -ForegroundColor Green
 Write-Host '    Bu klasörü EN AZ iki ayrı yere kopyalayın (harici disk + bulut/şifreli arşiv).' -ForegroundColor Yellow
 Write-Host '    modemst1/modemst2/fsg/persist cihazınıza özeldir; başka cihazın yedeği yerine geçmez.' -ForegroundColor Yellow
-Write-Host '    Cihazı yeniden başlatmak için: .venv\Scripts\edl.exe reset'
+Write-Host '    Cihazı yeniden başlatmak için: .venv\Scripts\python.exe third_party\edl\edl.py reset'

@@ -23,7 +23,8 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $Root = Resolve-Path (Join-Path $PSScriptRoot '..\..')
-$Edl  = Join-Path $Root '.venv\Scripts\edl.exe'
+$Py    = Join-Path $Root '.venv\Scripts\python.exe'
+$EdlPy = Join-Path $Root 'third_party\edl\edl.py'   # edl.exe Windows'ta bozuk (sembolik bağlantı)
 $Backup = Resolve-Path $Backup
 $common = @('--memory=emmc'); if ($Loader) { $common += "--loader=$Loader" }
 
@@ -46,13 +47,13 @@ Write-Host "Bu işlem cihazın eMMC'sinin üzerine yazacak ($Mode). Devam için 
 if ((Read-Host) -ne 'EVET') { Write-Host 'İptal.'; exit 1 }
 
 if ($Mode -eq 'parts') {
-    & $Edl wl (Join-Path $Backup 'parts') @common
+    & $Py $EdlPy wl (Join-Path $Backup 'parts') @common
 } else {
     # EDL yedeği: full\emmc_full.bin, ADB yedeği: full\mmcblk0.bin
     $img = Get-ChildItem (Join-Path $Backup 'full') -Filter *.bin | Select-Object -First 1
     if (-not $img) { throw 'full\ altında imaj yok.' }
-    & $Edl wf $img.FullName @common
+    & $Py $EdlPy wf $img.FullName @common
 }
 if ($LASTEXITCODE -ne 0) { throw "edl hata kodu $LASTEXITCODE" }
-& $Edl reset @common
+& $Py $EdlPy reset @common
 Write-Host '[+] Geri yükleme tamam, cihaz yeniden başlatılıyor.' -ForegroundColor Green

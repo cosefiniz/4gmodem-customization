@@ -91,6 +91,20 @@ Alınanlar:
 
 Cihazı EDL'den çıkarmak için: `.venv\Scripts\edl.exe reset`
 
+### HMUF02'de doğrulanan EDL ayrıntıları (2026-11-07)
+
+- **EDL'e giriş: tuş yöntemi çalışıyor.** SIM yanındaki tuşa basılı tutup USB'ye takın. LED'ler sönük kalır ve cihaz `QHSUSB__BULK` (05C6:9008) olarak görünür.
+  Stok yazılım `adb reboot edl` komutunu yok sayar (normal açılır, `05C6:9091`).
+- **Sürücü:** winget Zadig'i Başlat menüsüne eklemez. Şununla açın:
+  `Start-Process "$env:LOCALAPPDATA\Microsoft\WinGet\Links\zadig.exe" -Verb RunAs`
+  Ardından Options → List All Devices → `QHSUSB__BULK` → WinUSB.
+- **Loader:** edl otomatik buluyor (`Loaders/cyanogen/007050e100000000_4614048173062ae4_fhprg_peek.bin`). `getstorageinfo` desteklenmiyor, zararsız.
+- **`.venv\Scripts\edl.exe` Windows'ta çalışmaz:** `edlclient\edl.py` sembolik bağlantı. Scriptler `python third_party\edl\edl.py` kullanır.
+- **Soğuk yedek:** `backups\edl-20261107-163352`
+  - 28/28 bölüm tam imajla birebir.
+  - ADB yedeğine göre farklı olanlar: `modemst1/2` (modem yazmış), `persist` (7 blok ext4 meta/journal), `system` (süper blok), `cache`, `userdata`.
+  - Flaşlamada cihaza özel bölümler **bu** yedekten yazılır.
+
 ## Yedeği saklama
 
 - `backups\` klasörü `.gitignore`'da. **Repoya ve herkese açık yerlere koymayın**: IMEI ve MAC içerir.

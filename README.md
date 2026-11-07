@@ -20,7 +20,7 @@ Hedef, Raspberry Pi Zero W benzeri bir kullanım. 4G/LTE tarafı kullanılmayaca
 | 2 | Cihazı USB'de görmek | ✅ `05C6:9024`, ADB açık, geçici root alındı | [scripts/windows/detect-device.ps1](scripts/windows/detect-device.ps1) |
 | 3a | **ADB tam yedek** (28 bölüm + tüm eMMC, hash'li) | ✅ 2026-11-07. Kritik bölümlerin hepsi doğrulandı | [docs/02-backup-restore.md](docs/02-backup-restore.md) |
 | 3b | Yedeğin 2 ayrı yere kopyalanması | ⏳ kullanıcı | |
-| 3c | EDL "soğuk" yedek (flaştan hemen önce) | ⏳ | [scripts/windows/backup-edl.ps1](scripts/windows/backup-edl.ps1) |
+| 3c | EDL "soğuk" yedek (flaştan hemen önce) | ✅ 2026-11-07, `backups\edl-20261107-163352`. 28/28 bölüm tam imajla birebir | [scripts/windows/backup-edl.ps1](scripts/windows/backup-edl.ps1) |
 | 4 | HMUF02 device tree (doğru LED'ler, modem kapalı) | 📝 taslak | [dts/](dts/) |
 | 5 | Debian 13 imajı derleme (Mio builder + HMUF02 yaması, GitHub Actions) | ✅ build #3 başarılı. lk1st'te `zbx,hmuf02`, /boot'ta HMUF02 dtb doğrulandı | [.github/workflows/build-image.yml](.github/workflows/build-image.yml) |
 | 6 | Flaşlama + ilk açılış | – | [docs/03-debian-install.md](docs/03-debian-install.md) |
