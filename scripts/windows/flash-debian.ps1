@@ -64,8 +64,12 @@ if ($Stage -eq 'edl') {
     }
     Confirm-Step 'EDL: aboot <- lk1st yazılacak ve boot bölümü silinecek. Stok Android bundan sonra açılmaz (yedekten geri dönülebilir).'
     Run $Py @($EdlPy, 'w', 'aboot', "$Image\aboot.mbn", '--memory=emmc')
-    Run $Py @($EdlPy, 'e', 'boot', '--memory=emmc')
-    Run $Py @($EdlPy, 'reset', '--memory=emmc')
+    # HMUF02 loader'ında "edl e" hata vermeden hiçbir şey yapmıyor (2026-11-07'de doğrulandı);
+    # boot'u silmek için 16 MB sıfır yazılır.
+    $zero = Join-Path $env:TEMP 'hmuf02_zeros_16M.bin'
+    [IO.File]::WriteAllBytes($zero, (New-Object byte[] (16MB)))
+    Run $Py @($EdlPy, 'w', 'boot', $zero, '--memory=emmc')
+    Run $Py @($EdlPy, 'reset')   # reset --memory kabul etmiyor
     Write-Host "`n[+] Aşama 1 tamam. Cihaz lk1st fastboot'ta açılmalı (18D1:D00D)." -ForegroundColor Green
     Write-Host '    Aygıt Yöneticisi''nde sürücüsüz görünürse Zadig ile WinUSB kurun, sonra -Stage fastboot.'
     exit 0

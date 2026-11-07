@@ -61,6 +61,16 @@ cd build/OpenStick-Builder && sudo ./build.sh
 
 ## Flaşlama (Windows'tan)
 
+Önerilen yol: [scripts/windows/flash-debian.ps1](../scripts/windows/flash-debian.ps1). Script iki aşamalıdır: `-Stage edl`, ardından `-Stage fastboot`.
+Aşağıdaki elle komutlar referans içindir.
+
+HMUF02'de 2026-11-07'de doğrulananlar:
+- `edl e boot` hata vermeden **hiçbir şey yapmıyor**. boot'u silmek için 16 MB sıfır yazılır (script bunu yapar).
+- `edl reset` `--memory` seçeneğini kabul etmez.
+- lk1st fastboot (`18D1:D00D`) bu PC'de ek sürücü gerektirmedi.
+  `fastboot getvar all` çıktısında `lk2nd:compatible: zbx,hmuf02` görünür.
+- rootfs yazımı ~7 dakika sürer.
+
 Tüm komutlar repo kökünden. `F` = imaj dosyalarının klasörü, `BK` = EDL yedeğinizin `parts` klasörü.
 
 ```powershell
@@ -91,13 +101,15 @@ foreach ($n in 'fsc','fsg','modem','modemst1','modemst2','persist','sec') { & $f
 
 ## İlk açılış
 
-- USB ağ: Windows'ta yeni bir RNDIS/ECM adaptörü belirir. Cihaz **192.168.5.1** adresindedir.
-- Wi-Fi hotspot: builder'a göre SSID "Openstick" veya "4G-UFI-XX", IP 192.168.4.1.
+- USB ağ: Windows'ta "Remote NDIS Compatible Device" belirir (USB `1D6B:0104`, ayrıca seri COM portu ve depolama).
+  Mio builder'da cihaz **192.168.100.1** adresindedir, PC DHCP ile 192.168.100.10–99 arası bir adres alır.
+  (kinsamanka builder'ında 192.168.5.1.)
+- Wi-Fi hotspot: Mio builder'da SSID "4G-UFI-XX". Parolası `configs/hostapd.conf` içinde ve herkesçe bilinir, **değiştirin veya kapatın**.
 - Seri konsol: `RX0/TX0/GND`, 115200 (bkz. [00-hardware.md](00-hardware.md)).
 - Varsayılan giriş: `user` / `1`. **İlk iş değiştirin.**
 
 ```bash
-ssh user@192.168.5.1
+ssh user@192.168.100.1
 sudo passwd user && sudo passwd root
 sudo resize2fs /dev/disk/by-partlabel/rootfs     # builder zaten yapmadıysa
 cat /proc/device-tree/model                       # "HMUF02-V05 ..." görmelisiniz
@@ -108,8 +120,8 @@ ls /sys/class/leds/                               # LED testi: echo 1 > .../brig
 
 Sonra yapılandırma scripti:
 ```bash
-scp scripts/linux/postinstall.sh user@192.168.5.1:/tmp/
-ssh user@192.168.5.1 sudo sh /tmp/postinstall.sh pistick "<ev-wifi-ssid>" "<parola>"
+scp scripts/linux/postinstall.sh user@192.168.100.1:/tmp/
+ssh user@192.168.100.1 sudo sh /tmp/postinstall.sh pistick "<ev-wifi-ssid>" "<parola>"
 ```
 
 ## Sorun giderme
