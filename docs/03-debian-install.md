@@ -133,3 +133,20 @@ ssh user@192.168.100.1 sudo sh /tmp/postinstall.sh pistick "<ev-wifi-ssid>" "<pa
 | Wi-Fi yok | `modem`/`persist` geri yazılmamış. `dmesg \| grep -i wcn` ile bakın; nomodem dtb şüpheliyse `msm8916-hmuf02.dtb`'ye dönün |
 | Rastgele eMMC hataları | Builder HS200'e düşürüyor. Yine olursa daha düşük hız gerekebilir |
 | LED'ler ters renk | `dts/msm8916-hmuf02.dts` içinde led_r/g/b GPIO'larını değiştirin, yeniden derleyin |
+
+## Uzaktan erişim: Tailscale
+
+```bash
+scp scripts/linux/install-tailscale.sh user@192.168.100.1:/tmp/
+ssh user@192.168.100.1 sudo sh /tmp/install-tailscale.sh openstick
+```
+
+Ekrandaki `https://login.tailscale.com/...` linkini açıp cihazı onaylayın.
+Sonra Tailscale kurulu her cihazdan `ssh user@openstick` ile her yerden bağlanabilirsiniz (MagicDNS).
+
+HMUF02 notları (2026-11-07, Tailscale 1.104.5):
+- Builder imajında `/etc/resolv.conf` kırık bir kısayol (`systemd-resolved` kurulu değil). Script bunu gerçek dosyaya çevirir; ardından Tailscale DNS'i yönetir.
+- `connmark` sağlık uyarısı beklenir: çekirdekte `CONFIG_NETFILTER_XT_CONNMARK` yok. Temel bağlantı çalışır.
+- tailscaled ~38 MB RAM kullanır.
+- Tailscale deposu otomatik güncellemelere eklidir.
+- Öneri: Tailscale yönetim panelinde cihaz için **"Disable key expiry"** seçin. Yoksa 180 günde bir yeniden giriş ister.

@@ -25,7 +25,8 @@ Hedef, Raspberry Pi Zero W benzeri bir kullanım. 4G/LTE tarafı kullanılmayaca
 | 5 | Debian 13 imajı derleme (Mio builder + HMUF02 yaması, GitHub Actions) | ✅ build #3 başarılı. lk1st'te `zbx,hmuf02`, /boot'ta HMUF02 dtb doğrulandı | [.github/workflows/build-image.yml](.github/workflows/build-image.yml) |
 | 6 | Flaşlama + ilk açılış | ✅ 2026-11-07. Debian açıldı, USB ağ 192.168.100.1, SSH açık | [docs/03-debian-install.md](docs/03-debian-install.md) |
 | 7 | Yapılandırma (zram, modem kapalı, Wi-Fi, SSH) | ✅ 2026-11-07. Wi-Fi istemci, zram 346 MB, journald RAM'de, hotspot kapalı, otomatik güncellemeler | [scripts/linux/postinstall.sh](scripts/linux/postinstall.sh) |
-| 8 | Kullanım senaryosu | – | [docs/04-ideas.md](docs/04-ideas.md) |
+| 8 | Uzaktan erişim (Tailscale) | ✅ 2026-11-07. `ssh user@openstick` her yerden | [scripts/linux/install-tailscale.sh](scripts/linux/install-tailscale.sh) |
+| 9 | Kullanım senaryosu | – | [docs/04-ideas.md](docs/04-ideas.md) |
 
 ## Hızlı başlangıç
 
