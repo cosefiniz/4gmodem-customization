@@ -3,7 +3,7 @@
  * HMUF02-V05 ("4G LTE WIFI MODEM", zbx002) MSM8916 USB dongle.
  *
  * UFI001C ile aynı aile (msm8916-ufi.dtsi). Farklar stok Android DTS'sinden alındı
- * (backups/*/info/ ve third_party/dts-ref/hmuf02-stock.dts):
+ * (docs/00-hardware.md, third_party/dts-ref/hmuf02-stock.dts):
  *   key_freset  -> GPIO 37, aktif-yüksek   (UFI001C ile aynı)
  *   4g_1        -> GPIO 71
  *   4g_type     -> GPIO 72
