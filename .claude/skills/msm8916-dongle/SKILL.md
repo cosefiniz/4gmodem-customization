@@ -12,8 +12,11 @@ description: Bu repodaki HMUF02-V05 MSM8916 4G USB dongle'ı ile çalışırken 
 - USB kimlikleri: stok `05C6:9024` (RNDIS+ADB, 192.168.100.1), EDL `05C6:9008`, fastboot/lk2nd `18D1:D00D`, Linux gadget `1D6B:0104`.
 - Stok ADB: `adb root` parolalı. Geçici root için `setprop service.adb.root 1; busybox killall adbd`. `exec-out` yok, bölüm okumak için `adb pull /dev/block/...` kullan (Git Bash'te `MSYS_NO_PATHCONV=1`).
 - Bu PC'de SuperDisplay hizmeti eski bir adb (1.0.40) çalıştırıp cihazı sahipleniyor. Cihaz görünmezse önce kullanıcıdan durdurmasını iste.
-- Doğrulanmış ilk yedek: `backups\adb-20261107-152754`.
-- Araç yolları (repo kökünden): `tools\platform-tools\adb.exe`, `tools\platform-tools\fastboot.exe`, `.venv\Scripts\edl.exe`.
+- Yedekler: `backups\adb-20261107-152754` (sıcak), `backups\edl-20261107-163352` (soğuk, esas alınacak).
+- Cihaz şu an Debian 13 çalıştırıyor: `ssh user@192.168.100.1` (USB). Ev ağına da Wi-Fi ile bağlı. Anahtarla giriş, parolasız sudo.
+- LED'ler: GPIO 71 yeşil `green:wan`, 72 kırmızı `red:power`, 73 mavi `blue:wlan` (`phy0assoc`). Tuş KEY_RESTART: basılınca cihaz yeniden başlar.
+- EDL: tuşa basılı tutarak tak. `edl e` bu loader'da işlem yapmıyor, bölüme sıfır yaz. `edl reset` `--memory` almaz.
+- Araç yolları (repo kökünden): `tools\platform-tools\adb.exe`, `tools\platform-tools\fastboot.exe`, `.venv\Scripts\python.exe third_party\edl\edl.py` (`.venv\Scripts\edl.exe` Windows'ta bozuk: sembolik bağlantı).
 
 ## Değişmez güvenlik kuralları
 1. `backups\edl-*` altında doğrulanmış tam yedek (SHA256SUMS.txt + full\emmc_full.bin) yoksa cihaza **yazma** (edl w/wl/wf/e, fastboot flash/erase) komutu çalıştırma. Önce `scripts\windows\backup-edl.ps1`.
