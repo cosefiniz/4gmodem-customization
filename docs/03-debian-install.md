@@ -34,10 +34,19 @@ Bu repo Mio builder'ını temel alır ve HMUF02 için üç şeyi değiştirir ([
 Derleme Linux gerektirir. İki yol var:
 
 **A) GitHub Actions (önerilen, PC'ye bir şey kurmadan):**
-1. Mio-sha512/OpenStick-Builder'ı GitHub hesabınıza fork'layın.
-2. Bu repodaki `dts/`, `scripts/linux/build-dtb.sh` ve `builder/apply-hmuf02.sh` adımlarını fork'unuzdaki workflow'a ekleyin.
-   Ya da derlenmiş `.dtb`'leri fork'un `dtbs/` klasörüne commit'leyin ve `configs/extlinux.conf` ile `scripts/build_hyp_aboot.sh` içindeki iki satırı elle değiştirin.
-3. Actions → Build → Run workflow. Çıkan artifact'i indirin.
+
+Bu repodaki [.github/workflows/build-image.yml](../.github/workflows/build-image.yml) şunları yapar:
+1. Mio builder'ı sabit bir commit'te alır.
+2. `builder/apply-hmuf02.sh` ile yamalar: HMUF02 DTB'leri, extlinux ve lk2nd `zbx,hmuf02` girdisi (GPIO 37 aktif-yüksek tuş).
+3. ARM runner'da derler.
+4. `hmuf02-debian-<no>` artifact'ini 30 gün saklar.
+
+`dts/` veya `builder/` değişince kendiliğinden çalışır. Elle çalıştırmak için:
+```bash
+gh workflow run build-image.yml -f dtb=msm8916-hmuf02-nomodem
+gh run watch
+gh run download --name hmuf02-debian-<no> --dir build/image
+```
 
 **B) WSL2 (Ubuntu 24.04):**
 ```bash

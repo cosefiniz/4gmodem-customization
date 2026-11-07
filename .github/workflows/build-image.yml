@@ -1,0 +1,98 @@
+name: Debian imajı (HMUF02)
+
+# Mio-sha512/OpenStick-Builder'ı sabit bir commit'te alır, builder/apply-hmuf02.sh ile
+# HMUF02-V05'e uyarlar ve flaşlanacak dosyaları artifact olarak yükler.
+# Elle çalıştırılır: Actions -> "Debian imajı (HMUF02)" -> Run workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      dtb:
+        description: Varsayılan device tree
+        type: choice
+        options:
+          - msm8916-hmuf02-nomodem
+          - msm8916-hmuf02
+        default: msm8916-hmuf02-nomodem
+  push:
+    paths:
+      - dts/**
+      - builder/**
+      - scripts/linux/build-dtb.sh
+      - .github/workflows/build-image.yml
+
+permissions:
+  contents: read
+
+env:
+  BUILDER_REPO: https://github.com/Mio-sha512/OpenStick-Builder.git
+  # debian dalı, 2025-12-16. Güncellemeden önce değişiklikleri gözden geçirin.
+  BUILDER_SHA: 7b243fff07798ae1b980eced998942455050a0f6
+  B: build/OpenStick-Builder
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Builder'ı al (sabit commit + submodule'ler)
+        run: |
+          git clone --no-checkout "$BUILDER_REPO" "$B"
+          git -C "$B" checkout "$BUILDER_SHA"
+          git -C "$B" submodule update --init --recursive --depth 1
+          git -C "$B" log -1 --format='%H %cd %s'
+
+      - name: Bağımlılıklar
+        run: |
+          sudo sh -e "$B/scripts/install_deps.sh"
+          sudo apt-get install -y cpp device-tree-compiler python3
+
+      - name: HMUF02 yaması
+        env:
+          DTB: ${{ inputs.dtb || 'msm8916-hmuf02-nomodem' }}
+        run: bash builder/apply-hmuf02.sh "$B"
+
+      - name: hyp + aboot (qhypstub + lk1st)
+        working-directory: ${{ env.B }}
+        run: sudo sh -e scripts/build_hyp_aboot.sh
+
+      - name: GPT + DB410c firmware
+        working-directory: ${{ env.B }}
+        run: sudo sh -e scripts/extract_fw.sh
+
+      - name: Debian rootfs
+        working-directory: ${{ env.B }}
+        run: sudo sh -e scripts/debootstrap.sh
+
+      - name: gadget-tools
+        working-directory: ${{ env.B }}
+        run: sudo sh -e scripts/build_gt.sh
+
+      - name: İmajlar
+        working-directory: ${{ env.B }}
+        run: sudo sh -e scripts/build_images.sh
+
+      - name: Paketle
+        run: |
+          OUT=out/hmuf02-debian
+          mkdir -p "$OUT/dtbs"
+          sudo cp -a "$B"/files/. "$OUT/"
+          cp build/dtbs/*.dtb "$OUT/dtbs/"
+          sudo chown -R "$(id -u):$(id -g)" out
+          {
+            echo "builder: $BUILDER_REPO @ $BUILDER_SHA"
+            echo "repo:    $GITHUB_REPOSITORY @ $GITHUB_SHA"
+            echo "dtb:     ${{ inputs.dtb || 'msm8916-hmuf02-nomodem' }}"
+            echo "tarih:   $(date -u +%FT%TZ)"
+          } > "$OUT/BUILD-INFO.txt"
+          (cd "$OUT" && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
+          ls -la "$OUT" "$OUT/dtbs"
+          cat "$OUT/SHA256SUMS"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hmuf02-debian-${{ github.run_number }}
+          path: out/hmuf02-debian
+          retention-days: 30
