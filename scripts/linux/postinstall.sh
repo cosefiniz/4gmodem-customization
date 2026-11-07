@@ -2,8 +2,8 @@
 # Debian kurulduktan sonra dongle üzerinde (root olarak) çalıştırılır.
 # Cihazı "Raspberry Pi Zero W" benzeri, başsız (headless) bir Linux kutusuna çevirir.
 #
-#   scp scripts/linux/postinstall.sh root@192.168.68.1:/root/
-#   ssh root@192.168.68.1 sh /root/postinstall.sh <hostname> <wifi-ssid> <wifi-parola>
+#   scp scripts/linux/postinstall.sh user@192.168.100.1:/tmp/
+#   ssh user@192.168.100.1 sudo sh /tmp/postinstall.sh <hostname> [wifi-ssid] [wifi-parola]
 #
 # Yaptıkları:
 #   - hostname, saat dilimi, locale
@@ -34,9 +34,41 @@ apt-get install -y --no-install-recommends \
 echo "[*] LTE / modem servislerini devre dışı bırak (4G kullanılmayacak)"
 for s in ModemManager rmtfs qmi-proxy; do
     systemctl disable --now "$s" 2>/dev/null || true
+    systemctl mask "$s" 2>/dev/null || true
 done
+nmcli con delete lte 2>/dev/null || true
 # Not: MSM8916'da Wi-Fi (WCNSS/wcn36xx) modemden (MPSS) ayrı bir çekirdekte çalışır.
-# Yine de bu adımdan sonra Wi-Fi'nin çalıştığını mutlaka test edin.
+# HMUF02'de modem kapalı DTB ile Wi-Fi'nin çalıştığı doğrulandı (2026-11-07).
+
+echo "[*] Builder'ın açık hotspot'unu kapat (parolası herkese açık reposunda yazıyor)"
+systemctl disable --now hostapd 2>/dev/null || true
+
+echo "[*] nftables: çekirdekte CONFIG_NFT_REDIR yok; DNS 'redirect' kuralları tüm dosyanın yüklenmesini engelliyor"
+if grep -q 'redirect to' /etc/nftables.conf 2>/dev/null; then
+    cp -n /etc/nftables.conf /etc/nftables.conf.orig
+    cat > /etc/nftables.conf <<'EOF'
+#!/usr/sbin/nft -f
+# HMUF02 / 4gmodem-customization. Orijinali: /etc/nftables.conf.orig
+# DNS "redirect" kuralları kaldırıldı (çekirdekte CONFIG_NFT_REDIR yok). Sadece LAN NAT.
+flush ruleset
+
+table ip nat {
+	chain postrouting {
+		type nat hook postrouting priority 100;
+		ip saddr 192.168.100.0/24 ip daddr != 192.168.100.0/24 masquerade
+	}
+}
+
+table ip6 nat {
+	chain postrouting {
+		type nat hook postrouting priority 100;
+		ip6 saddr dead:beef::/64 ip6 daddr != dead:beef::/64 masquerade
+	}
+}
+EOF
+    systemctl restart nftables || true
+fi
+systemctl reset-failed || true
 
 echo "[*] zram swap"
 cat > /etc/default/zramswap <<'EOF'

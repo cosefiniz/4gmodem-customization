@@ -90,14 +90,14 @@ Ofsetler: `backups/adb-*/info/part-offsets.txt`.
 | Çekirdek / dağıtım | 6.12.1-cpr / Debian 13.7, DT modeli `HMUF02-V05 4G Modem Stick (no modem)` |
 | RAM | 462 MB toplam (stok Android'de 402 MB): modem kapalı DTB ile kazanç |
 | eMMC | rootfs 3.4 GB (2.6 GB boş), /boot 60 MB |
-| Wi-Fi | ✅ WCNSS remoteproc çalışıyor, `wlan0` var (Wi-Fi'ye bağlanma henüz test edilmedi) |
+| Wi-Fi | ✅ istemci olarak ev ağına bağlandı, otomatik yeniden bağlanıyor. ~72 ms ping 1.1.1.1 |
 | USB gadget | ✅ `1D6B:0104`: RNDIS (`br0` 192.168.100.1) + seri (COM) + mass storage |
-| LED kırmızı | ✅ GPIO 72 = `red:power`, açılışta yanıyor (fiziksel olarak doğrulandı) |
-| LED yeşil/mavi | GPIO 73 `green:wlan`, GPIO 71 `blue:wan`. Linux'ta görünüyorlar, renkleri henüz fiziksel olarak doğrulanmadı |
+| LED'ler | ✅ fiziksel olarak doğrulandı: GPIO 71 **yeşil** `green:wan`, GPIO 72 **kırmızı** `red:power` (açık), GPIO 73 **mavi** `blue:wlan` (Wi-Fi simgesi, `phy0assoc`: Wi-Fi'ye bağlıyken yanar) |
 | Tuş (GPIO 37) | ✅ `KEY_RESTART`. Aktif-yüksek doğru. **Basınca systemd-logind cihazı yeniden başlatır** |
 | Sıcaklık | boşta 41–44 °C |
 | Saat | RTC yok, ağ olmadan saat yanlış başlar (NTP ile düzelir) |
-| Başarısız servisler | `rmtfs` (beklenen, modem kapalı), `nftables` (`iif "br0"` açılışta br0 yokken başarısız) |
+| Servisler | Başarısız yok. Çözülenler: `rmtfs`/`ModemManager` maskelendi. `nftables`: çekirdekte `CONFIG_NFT_REDIR` yok, DNS redirect kuralları çıkarıldı. `hostapd` açık hotspot'u kapatıldı |
+| Boşta kaynak | ~111 MB RAM kullanımı, 351 MB kullanılabilir, zram swap 346 MB, 46 °C |
 
 ## Sınırlar (Raspberry Pi Zero W'ye göre)
 
