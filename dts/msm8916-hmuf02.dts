@@ -5,14 +5,14 @@
  * UFI001C ile aynı aile (msm8916-ufi.dtsi). Farklar stok Android DTS'sinden alındı
  * (docs/00-hardware.md, third_party/dts-ref/hmuf02-stock.dts):
  *   key_freset  -> GPIO 37, aktif-yüksek   (UFI001C ile aynı)
- *   4g_1        -> GPIO 71
- *   4g_type     -> GPIO 72
- *   wifistatus  -> GPIO 73
+ *   4g_1        -> GPIO 71  = YEŞİL  (fiziksel olarak doğrulandı 2026-11-07)
+ *   4g_type     -> GPIO 72  = KIRMIZI (doğrulandı)
+ *   wifistatus  -> GPIO 73  = MAVİ   (doğrulandı, kasadaki Wi-Fi simgesi)
  *   ftest       -> GPIO 106 (test LED/pin, kullanılmıyor)
  *   esim1/2/3   -> GPIO 119 / 14 / 12, sim_hotplug -> GPIO 114
  *
- * DURUM: TASLAK. LED renk eşleşmesi (hangi GPIO hangi renk) cihaz üzerinde
- * doğrulanmalı:  echo 1 > /sys/class/leds/<isim>/brightness
+ * Linux'taki LED adları: red:power, green:wan, blue:wlan
+ * Tuş: KEY_RESTART. systemd-logind varsayılan olarak buna basılınca yeniden başlatır.
  */
 
 /dts-v1/;
@@ -33,17 +33,20 @@
 	bias-pull-down;
 };
 
-/* wifistatus -> WLAN göstergesi */
+/* 4g_1 (GPIO 71) yeşil -> WAN/durum göstergesi */
 &led_g {
-	gpios = <&tlmm 73 GPIO_ACTIVE_HIGH>;
-};
-
-/* 4g_1 -> WAN göstergesi */
-&led_b {
 	gpios = <&tlmm 71 GPIO_ACTIVE_HIGH>;
+	function = LED_FUNCTION_WAN;
 };
 
-/* 4g_type -> güç/durum göstergesi olarak kullanıyoruz */
+/* wifistatus (GPIO 73) mavi, Wi-Fi simgesi -> Wi-Fi'ye bağlıyken yanar */
+&led_b {
+	gpios = <&tlmm 73 GPIO_ACTIVE_HIGH>;
+	function = LED_FUNCTION_WLAN;
+	linux,default-trigger = "phy0assoc";
+};
+
+/* 4g_type (GPIO 72) kırmızı -> güç göstergesi */
 &led_r {
 	gpios = <&tlmm 72 GPIO_ACTIVE_HIGH>;
 };
